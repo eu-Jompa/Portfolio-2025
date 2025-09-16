@@ -1,35 +1,17 @@
-const nodemailer = require("nodemailer");
+import { envioEmail } from "../contato.js"; // caminho relativo para o helper
 
-const envioEmail = async ({ nome, email, mensagem }) => {
-    if (!nome || !email || !mensagem) {
-        throw new Error("Todos os campos são obrigatórios!");
+export default async function handler(req, res) {
+    if (req.method !== "POST") {
+        return res.status(405).json({ erro: "Método não permitido" });
     }
 
-    const transporter = nodemailer.createTransport({
-            
-        service: 'gmail',
-            auth: {
-            user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-        },
-    });
+    const { nome, email, mensagem } = req.body;
 
-    const mailOptions ={
-        from: process.env.EMAIL_USER,
-        to: process.env.EMAIL_USER,
-        replyTo: email,
-        subject: `Contato do portfólio - ${nome}`,
-        html: `
-        <div>
-            <h2>Nova mensagem de contato</h2>
-            <p><strong>Nome:</strong> ${nome}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Mensagem:</strong></p>
-            <p>${mensagem}</p>
-        </div>
-        `,
-    };
-    await transporter.sendMail(mailOptions);
+    try {
+        await envioEmail({ nome, email, mensagem });
+        res.status(200).json({ sucesso: "Mensagem enviada com sucesso!" });
+    } catch (error) {
+        console.error(error);
+        res.status(400).json({ erro: error.message });
+    }
 }
-    module.exports = {envioEmail}
-
